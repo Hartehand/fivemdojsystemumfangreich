@@ -477,7 +477,7 @@ CREATE TABLE IF NOT EXISTS doj_evidence_custody (
   PRIMARY KEY (id),
   KEY idx_custody_evidence (evidence_id, created_at),
   KEY idx_custody_entry_hash (entry_hash),
-  CONSTRAINT fk_custody_evidence FOREIGN KEY (evidence_id) REFERENCES doj_evidence(id) ON DELETE CASCADE
+  CONSTRAINT fk_doj_evidence_custody_evidence FOREIGN KEY (evidence_id) REFERENCES doj_evidence(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS doj_audit_log (
