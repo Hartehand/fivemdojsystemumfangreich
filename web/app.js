@@ -188,7 +188,17 @@ window.addEventListener('message', (event) => {
 })
 
 document.getElementById('closeBtn').onclick = () => cb('close')
-document.getElementById('refreshBtn').onclick = () => location.reload()
+document.getElementById('refreshBtn').onclick = async () => {
+  const response = await cb('bootstrap')
+  if (response?.ok) {
+    state.bootstrap = response.data
+    document.getElementById('actorInfo').textContent = `${state.bootstrap?.actor?.name || '-'} (${state.bootstrap?.role || '-'})`
+    fillFilterSelect('filterStatus', state.bootstrap?.defaults?.caseStatus || [])
+    fillFilterSelect('filterType', state.bootstrap?.defaults?.caseTypes || [])
+    fillFilterSelect('filterPriority', state.bootstrap?.defaults?.casePriority || [])
+    await render()
+  }
+}
 
 document.getElementById('globalSearch').addEventListener('keydown', async (e) => {
   if (e.key !== 'Enter') return

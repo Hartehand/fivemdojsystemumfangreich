@@ -54,6 +54,10 @@ RegisterNUICallback('close', function(_, cb)
     cb({ ok = true })
 end)
 
+
+RegisterNUICallback('bootstrap', function(data, cb)
+    callServer('doj_casehub:bootstrap', data, cb)
+end)
 RegisterNUICallback('search', function(data, cb)
     callServer('doj_casehub:search', data, cb)
 end)
