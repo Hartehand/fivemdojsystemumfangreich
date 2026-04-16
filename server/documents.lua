@@ -137,3 +137,18 @@ function DojDocuments.CreateNote(source, payload)
     addAudit('create_note', 'note', noteId, actor, nil, payload)
     return { ok = true, data = { id = noteId } }
 end
+
+
+function DojDocuments.List(source, payload)
+    local ok = DojPermissions.Assert(source, 'tablet_open')
+    if not ok then return { ok = false, error = 'no_permission' } end
+
+    local rows
+    if payload and payload.case_id then
+        rows = DojDB.Query([[SELECT d.* FROM doj_case_documents cd JOIN doj_documents d ON d.id = cd.document_id WHERE cd.case_id = ? AND cd.deleted_at IS NULL AND d.deleted_at IS NULL ORDER BY d.updated_at DESC]], { payload.case_id })
+    else
+        rows = DojDB.Query('SELECT * FROM doj_documents WHERE deleted_at IS NULL ORDER BY updated_at DESC LIMIT 200')
+    end
+
+    return { ok = true, data = rows }
+end

@@ -303,3 +303,45 @@ function DojCases.Search(source, payload)
         }
     }
 end
+
+
+function DojCases.GetDetails(source, payload)
+    local okPerm, xPlayer = DojPermissions.Assert(source, 'tablet_open')
+    if not okPerm then return { ok = false, error = xPlayer } end
+
+    local caseRow = DojCases.GetById(payload.case_id)
+    if not caseRow then return { ok = false, error = 'case_not_found' } end
+    if caseRow.is_sealed == 1 and not DojPermissions.CanViewSealed(xPlayer) then return { ok = false, error = 'case_sealed' } end
+
+    local details = {
+        case = caseRow,
+        people = DojDB.Query('SELECT * FROM doj_case_people WHERE case_id = ? AND deleted_at IS NULL', { payload.case_id }),
+        vehicles = DojDB.Query('SELECT * FROM doj_case_vehicles WHERE case_id = ? AND deleted_at IS NULL', { payload.case_id }),
+        weapons = DojDB.Query('SELECT * FROM doj_case_weapons WHERE case_id = ? AND deleted_at IS NULL', { payload.case_id }),
+        evidence = DojDB.Query([[SELECT e.* FROM doj_case_evidence ce JOIN doj_evidence e ON e.id = ce.evidence_id WHERE ce.case_id = ? AND ce.deleted_at IS NULL AND e.deleted_at IS NULL]], { payload.case_id }),
+        hearings = DojDB.Query('SELECT * FROM doj_hearings WHERE case_id = ? AND deleted_at IS NULL ORDER BY start_at DESC', { payload.case_id }),
+        documents = DojDB.Query([[SELECT d.id, d.title, d.document_type, d.status, d.current_version_id, d.updated_at FROM doj_case_documents cd JOIN doj_documents d ON d.id = cd.document_id WHERE cd.case_id = ? AND cd.deleted_at IS NULL]], { payload.case_id }),
+        tasks = DojDB.Query('SELECT * FROM doj_case_tasks WHERE case_id = ? AND deleted_at IS NULL ORDER BY due_at IS NULL, due_at ASC', { payload.case_id }),
+        timeline = DojDB.Query('SELECT * FROM doj_case_timeline WHERE case_id = ? ORDER BY id DESC LIMIT 200', { payload.case_id })
+    }
+
+    return { ok = true, data = details }
+end
+
+function DojCases.UpdateTaskStatus(source, payload)
+    local okPerm, xPlayer = DojPermissions.Assert(source, 'task_manage')
+    if not okPerm then return { ok = false, error = xPlayer } end
+
+    local task = DojDB.Single('SELECT * FROM doj_case_tasks WHERE id = ? AND deleted_at IS NULL LIMIT 1', { payload.task_id })
+    if not task then return { ok = false, error = 'task_not_found' } end
+
+    local caseOk, caseErr = DojCases.AssertCaseEditable(source, task.case_id)
+    if not caseOk then return { ok = false, error = caseErr } end
+
+    local actor = DojUtils.Actor(source, xPlayer)
+    DojDB.Update('UPDATE doj_case_tasks SET status = ?, updated_at = UTC_TIMESTAMP() WHERE id = ?', { payload.status, payload.task_id })
+    addTimeline(task.case_id, 'task_updated', 'Aufgabenstatus geändert', actor, { status = task.status }, { status = payload.status })
+    addAudit('update_task_status', 'case_task', payload.task_id, actor, { status = task.status }, { status = payload.status })
+
+    return { ok = true }
+end

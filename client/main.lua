@@ -62,6 +62,26 @@ RegisterNUICallback('search', function(data, cb)
     callServer('doj_casehub:search', data, cb)
 end)
 
+
+RegisterNUICallback('getCaseDetails', function(data, cb)
+    callServer('doj_casehub:getCaseDetails', data, cb)
+end)
+
+RegisterNUICallback('updateTaskStatus', function(data, cb)
+    callServer('doj_casehub:updateTaskStatus', data, cb)
+end)
+
+RegisterNUICallback('listHearings', function(data, cb)
+    callServer('doj_casehub:listHearings', data, cb)
+end)
+
+RegisterNUICallback('updateHearing', function(data, cb)
+    callServer('doj_casehub:updateHearing', data, cb)
+end)
+
+RegisterNUICallback('listDocuments', function(data, cb)
+    callServer('doj_casehub:listDocuments', data, cb)
+end)
 RegisterNUICallback('getCases', function(data, cb)
     callServer('doj_casehub:getCases', data, cb)
 end)
